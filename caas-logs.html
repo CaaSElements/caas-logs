@@ -1,0 +1,161 @@
+<link rel="import" href="../polymer/polymer.html">
+
+<!--
+`caas-logs`
+Polymer Log Element for Crowdfunding as a Service Solutions
+
+@demo demo/index.html
+-->
+
+<dom-module id="caas-logs">
+  <template>
+      <iron-ajax
+        id="getLogs"
+        url="[[apiEndpoint]]/logmessages"
+        headers="[[_requestHeaders]]"
+        method="GET"
+        last-response="{{_apiData}}"
+        debounce-duration="3000"
+        auto="[[autoDownload]]"
+        loading="{{loading}}"
+        params="[[_queryParameters]]"
+      ></iron-ajax>
+    <h2>Hello [[prop1]]</h2>
+  </template>
+
+  <script>
+    Polymer({
+
+      is: 'caas-logs',
+
+      properties: {
+
+        /**
+        * The server side API endpoint
+        */
+        apiEndpoint: {
+          type: String,
+          value: null
+        },
+
+        /**
+        * Exposes the access token (JSON web token) associated with the current session
+        */
+        accessToken: {
+          type: String,
+          value: null,
+          notify: true
+        },
+
+        /**
+        * True while getting all incentives
+        */
+        loading: {
+          type: Boolean,
+          value: false,
+          notify: true
+        },
+
+        /**
+        * List of all logs according to query params
+        */
+        logs: {
+          type: Array,
+          computed: '_computeLogs(_apiData.*)',
+          notify: true
+        },
+
+        /**
+        * Determines whether the incentives should be downloaded automatically
+        */
+        autoDownload: {
+          type: Boolean,
+          value: false
+        },
+
+        limit: {
+          type: Number,
+          value : 100
+        },
+
+        searchString: {
+          type: String,
+          value: ""
+        },
+
+        categories: {
+          type: Array,
+          value: []
+        },
+
+        _queryParameters: {
+          type: String,
+          notify: true,
+          computed: "_computeQueryParameters(limit, searchString, categories.*)"
+        },
+
+        _requestHeaders: {
+          type: Object,
+          computed: '_computeRequestHeaders(accessToken)'
+        },
+
+        _apiData: {
+          type: Array
+        }
+
+      },
+
+      /*
+      * Download All Incentives
+      */
+      getLogs: function() {
+        this.$.getItems.generateRequest();
+      },
+
+      _computeLogs: function(apiDataChange) {
+        var apiData = apiDataChange.base;
+        if(!apiData) return;
+        return apiData.map(this._parseApiDataItemToProspect)
+      },
+
+      _parseApiDataItemToProspect: function(apiDataItem) {
+        return {
+          id: apiDataItem.id,
+          IP: apiDataItem.IP,
+          last: apiDataItem.last,
+          lastCampaign: apiDataItem.lastCampaign,
+          refferer: apiDataItem.refferer,
+          remarks: apiDataItem.remarks,
+          source: apiDataItem.source,
+          timestamp: apiDataItem.timestamp,
+          message: apiDataItem.message
+        }
+      },
+
+      _computeQueryParameters: function(limit, searchString, categories) {
+        var parameters = {}
+        if(limit) parameters.limit = limit;
+        if(searchString) parameters.searchString = searchString;
+        if(categories.base.length > 0) parameters.categories = this._buildCategoriesString(categories);
+        return parameters;
+      },
+
+
+      _buildCategoriesString: function(categories) {
+          var categories = "";
+          for (var i = 0; i < this.categories.length; i++) {
+              categories = categories + "," + this.categories[i];
+          }
+          categories = categories.replace(/(^,)|(,$)/g, "");
+          return categories;
+      },
+
+      _computeRequestHeaders: function(accessToken) {
+        return {
+          'authorization': 'Bearer ' + accessToken
+        }
+      },
+
+    });
+  </script>
+</dom-module>

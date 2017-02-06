@@ -1,0 +1,117 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, minimum-scale=1, initial-scale=1, user-scalable=yes">
+
+    <title>caas-logs demo</title>
+
+    <script src="../../webcomponentsjs/webcomponents-lite.js"></script>
+
+    <link rel="import" href="../../iron-demo-helpers/demo-pages-shared-styles.html">
+    <link rel="import" href="../../iron-demo-helpers/demo-snippet.html">
+    <link rel="import" href="../caas-logs.html">
+    <link rel="import" href="../../caas-auth/caas-auth.html">
+    <link rel="import" href="../../app-route/app-location.html">
+    <link rel="import" href="../../iron-list/iron-list.html">
+    <link rel="import" href="../../paper-input/paper-input.html">
+
+
+  </head>
+  <body>
+    <div class="vertical-section-container">
+      <h3>Basic caas-logs demo</h3>
+      <demo-snippet>
+        <template
+          is="dom-bind"
+          id="demo"
+          signed-in="[[signedIn]]">
+
+          <caas-logs
+            id="logs"
+            auto-download="[[signedIn]]"
+            api-endpoint="https://192.168.178.36/api"
+            access-token="[[accessToken]]"
+            logs="{{logs}}"
+            limit="100"
+            search-string="[[searchString]]"
+            loading="{{loadingLogs}}">
+          </caas-logs>
+
+          <caas-auth
+            id="auth"
+            api-endpoint="https://192.168.178.36/api"
+            signed-in="{{signedIn}}"
+            access-token="{{accessToken}}"
+            user-role="{{userRole}}"
+            user-id="{{userId}}"
+          ></caas-auth>
+
+          <app-location
+            query-params="{{queryParams}}"
+          ></app-location>
+
+          <template is="dom-if" if="[[!signedIn]]">
+            <h2>Sign in</h2>
+            <form on-submit="signIn">
+              <label for="username">username</label><br>
+              <input type="text" id="username" value="[[queryParams.username]]"><p>
+              <label for="password">password</label><br>
+              <input type="password" id="password" value="[[queryParams.password]]"><p>
+              <input type="submit" value="Sign In">
+            </form>
+          </template>
+
+          <template is="dom-if" if="[[signedIn]]">
+
+            <h2>Signed In as [[userRole]] #[[userId]]</h2>
+            <form on-submit="signOut">
+              <input type="submit" value="Sign Out">
+            </form>
+
+            <h2>Logs</h2>
+
+            <label for="search">username</label><br>
+            <input type="text" id="search" value="{{searchString::change}}">
+
+            <div class="log-list">
+
+                <span hidden$="[[!loading]]">loading logs</span>
+
+                <iron-list
+                    items="{{logs}}"
+                    as="log">
+
+                    <template>
+                        <div class="item">
+                            Log: [[log.message]]
+                        </div>
+                    </template>
+
+                </iron-list>
+
+            </div>
+
+
+          </template>
+
+          <script>
+            var demo = document.querySelector('#demo');
+            var logs = document.querySelector('#logs');
+
+            demo.signIn = function(evt) {
+              evt.preventDefault();
+              auth.signIn(
+                document.querySelector('#username').value,
+                document.querySelector('#password').value,
+                'accountmanager'
+              );
+            }
+
+            demo.signOut = function(evt) {
+              evt.preventDefault();
+              auth.signOut();
+            }
+          </script>
+        </template>
+      </demo-snippet>
